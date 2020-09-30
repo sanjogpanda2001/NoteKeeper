@@ -23,11 +23,36 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
  //dummy data
-        listOfNotes.add(noteStructure(1,"oct","basics of android"))
-        listOfNotes.add(noteStructure(2,"nov","any opensource project"))
-        listOfNotes.add(noteStructure(3,"oct","dedicate to organisation"))
+       listOfNotes.add(noteStructure(1,"oct","basics of android"))
+        //listOfNotes.add(noteStructure(2,"nov","any opensource project"))
+        //listOfNotes.add(noteStructure(3,"oct","dedicate to organisation"))
 
-        var myNotesAdapter= MyNotesAdapter(listOfNotes)
+       var myNotesAdapter= MyNotesAdapter(this,listOfNotes)
+        lvNotes.adapter=myNotesAdapter
+
+       LoadQuery("%")
+    }
+
+    override fun onResume() {
+        LoadQuery("%")
+        super.onResume()
+    }
+
+    fun LoadQuery(title:String){
+        var dbManager1=DbManager(this )
+        val projections= arrayOf("ID","Title","Description")
+        val selectionSArgs= arrayOf("%")
+        val cursor=dbManager1.Query(null,"Title like ?",selectionSArgs,"Title")
+        listOfNotes.clear()
+        if(cursor.moveToFirst()){
+            do {
+                val ID=cursor.getInt(cursor.getColumnIndex("ID"))
+                val Title=cursor.getString(cursor.getColumnIndex("Title"))
+                val Description=cursor.getString(cursor.getColumnIndex("Description"))
+                listOfNotes.add(noteStructure(ID,Title,Description))
+            }while (cursor.moveToNext())
+        }
+        var myNotesAdapter= MyNotesAdapter(this,listOfNotes)
         lvNotes.adapter=myNotesAdapter
     }
 
@@ -41,6 +66,7 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextSubmit(query: String?): Boolean {
 
                 Toast.makeText(applicationContext,query,Toast.LENGTH_LONG).show()
+                LoadQuery("%$query%")
                 return false
             }
 
@@ -66,8 +92,11 @@ return false
 
     inner  class MyNotesAdapter: BaseAdapter {
         var listOfNotesAdapter=ArrayList<noteStructure>()
-        constructor(listOfNotesAdapter:ArrayList<noteStructure>):super(){
+        var context:Context?=null
+
+        constructor(context:Context,listOfNotesAdapter:ArrayList<noteStructure>):super(){
             this.listOfNotesAdapter=listOfNotesAdapter
+            this.context=context
         }
 
         override fun getCount(): Int {
@@ -91,10 +120,28 @@ return false
             var myNote=listOfNotesAdapter[position]
             myView.tvTitle.text=myNote.noteName
             myView.tvDes.text=myNote.noteDes
+            myView.imageButton.setOnClickListener(View.OnClickListener{
+                var dbm=DbManager(this.context!!)
+                val selectionArgs= arrayOf(myNote.noteID.toString())
+                dbm.Delete("ID=?",selectionArgs )
+                LoadQuery("%")
+            })
+            myView.imageButton2.setOnClickListener(View.OnClickListener{
+               GoToUpdate(myNote)
+            })
+
 
             return  myView
         }
 
+    }
+
+    fun GoToUpdate(note:noteStructure){
+        var intent=Intent(this,AddNotes::class.java)
+        intent.putExtra("ID",note.noteID)
+        intent.putExtra("name",note.noteName)
+        intent.putExtra("des",note.noteDes)
+        startActivity(intent)
     }
 
 }

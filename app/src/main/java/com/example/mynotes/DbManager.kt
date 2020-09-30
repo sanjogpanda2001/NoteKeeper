@@ -2,8 +2,11 @@ package com.example.mynotes
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.database.sqlite.SQLiteQueryBuilder
+import android.media.projection.MediaProjection
 
 class DbManager{
     val dbName="MyNotes"
@@ -42,5 +45,21 @@ class DbManager{
         return ID
     }
 
+    fun Query(projection: Array<String>?, selection:String, selectionArgs:Array<String>, SortOrder:String): Cursor {
+        val qb=SQLiteQueryBuilder()
+        qb.tables=dbTable
+        val cursor=qb.query(sqlDB,projection,selection,selectionArgs,null,null,SortOrder)
+        return cursor
+    }
+
+    fun Delete(selection: String,selectionArgs: Array<String>):Int{
+        val count= sqlDB!!.delete(dbTable,selection,selectionArgs)
+        return count
+    }
+
+    fun Update(value:ContentValues,selection:String,selectionArgs:Array<String>):Int{
+        val count=sqlDB!!.update(dbTable,value,selection,selectionArgs)
+        return count
+    }
 
 }
